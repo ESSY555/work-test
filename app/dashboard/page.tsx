@@ -1,4 +1,4 @@
-"use client"; // 👈 Required for Next.js
+"use client";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 import LogoutButton from "../components/LogoutButton";
@@ -8,9 +8,8 @@ import { auth } from "../lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useEffect } from "react";
 import { User } from "firebase/auth";
-import { db } from "../lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
-// Sample data for Sales Trends & User Growth
+import Sidebar from "../components/Sidebar";
+
 const data = [
   { name: "Jan", users: 400 },
   { name: "Feb", users: 600 },
@@ -49,11 +48,11 @@ const categoryData = [
   { name: "Others", value: 5, color: "#9C27B0" },         // Purple
 ];
 
-// Define a type for user data
+
 type UserDataKey = "name" | "email" | "status" | "dateJoined";
 type StatusType = "Active" | "Pending" | "Inactive";
 
-// User data
+
 const usersData = [
   { id: 1, name: "John Doe", email: "john@example.com", status: "Active" as StatusType, country: "USA", dateJoined: "2023-01-01", lastActive: "2024-07-15" },
   { id: 2, name: "Jane Smith", email: "jane@example.com", status: "Pending" as StatusType, country: "UK", dateJoined: "2023-02-10", lastActive: "2024-07-10" },
@@ -61,7 +60,7 @@ const usersData = [
 ];
 
 
-// Function to map status to color
+
 const getStatusColor = (status: StatusType) => {
   switch (status) {
     case "Active":
@@ -78,12 +77,12 @@ const getStatusColor = (status: StatusType) => {
 
 
 export default function Dashboard() {
-  const [sortBy, setSortBy] = useState<UserDataKey>("name");
   const [filterStatus, setFilterStatus] = useState("All");
   const [users, setUsers] = useState(usersData);
   const [user, setUser] = useState<User | null>(null);
 
-  const sortedData = [...users].sort((a, b) => (a[sortBy] > b[sortBy] ? 1 : -1));
+  const sortedData = [...users].sort((a, b) => a.id - b.id);
+
   const filteredData = filterStatus === "All" ? sortedData : sortedData.filter(user => user.status === filterStatus);
 
   useEffect(() => {
@@ -94,48 +93,25 @@ export default function Dashboard() {
     return () => unsubscribe(); 
   }, []);
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "users"));
-        const usersList = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: Number(doc.id), 
-            name: data.name || "Unknown",
-            email: data.email || "No Email",
-            status: (data.status as StatusType) || "Inactive", 
-            country: data.country || "Unknown",
-            dateJoined: data.dateJoined || "N/A",
-            lastActive: data.lastActive || "N/A",
-          };
-        });
-  
-        setUsers(usersList);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-  
-    fetchUsers();
-  }, []);
-  
-
 
   return (
     <ProtectedRoute>
-      <div className="p-6 bg-gray-100">
-        {/* Header */}
+
+      <div className="flex gap-5 justify-between">
+
+        <div className="w-64"> <Sidebar /></div>
+        <div className="p-6 bg-gray-100 flex-1">
+
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-4xl font-bold text-gray-800">Dashboard</h1>
           <LogoutButton />
         </div>
-       {/* Display Logged-in User */}
+
        <p className="text-2xl font-semibold text-gray-700 p-5">
           Welcome, {user ? user.displayName || user.email : "Loading..."}!
         </p>
-        {/* Metrics Summary */}
-        <div className="flex flex-col md:flex-row gap-6">
+
+          <div className="flex flex-col md:flex-row gap-6 md:pr-3">
           <div className="bg-white p-6 shadow-lg w-full rounded-lg flex items-center">
             <i className="fas fa-users text-5xl mr-4 text-blue-500 animate-pulse" />
             <div className="">
@@ -150,7 +126,7 @@ export default function Dashboard() {
               <p className="text-2xl">300</p>
             </div>
           </div>
-          <div className="w-full bg-white p-6 shadow-lg rounded-lg flex items-center">
+            <div className="w-full bg-white p-6 shadow-lg rounded-lg flex items-center md:mr-3">
             <i className="fas fa-dollar-sign text-5xl mr-4 text-yellow-500 animate-pulse" />
             <div>
               <h3 className="text-xl font-semibold">Sales Revenue</h3>
@@ -159,10 +135,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-2 gap-6 mt-6">
-          {/* Sales Trends */}
-          <div className="bg-white p-6 shadow-lg rounded-lg">
+
+          <div className="flex flex-col md:flex-row gap-6 mt-6">
+
+            <div className="bg-white p-6 shadow-lg rounded-lg flex-1">
             <h2 className="font-bold mb-2">Sales Trends</h2>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={data}>
@@ -172,10 +148,10 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
 
-          {/* User Growth */}
-          <div className="bg-white p-6 shadow-lg rounded-lg">
+
+            <div className="bg-white p-6 shadow-lg rounded-lg flex-1">
   <h2 className="font-bold text-xl text-gray-700 mb-4">User Growth</h2>
-  {/* Wrap the BarChart inside ResponsiveContainer */}
+
   <ResponsiveContainer width="100%" height={400}>
     <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
       <Tooltip />
@@ -191,9 +167,9 @@ export default function Dashboard() {
         </div>
 
 
- {/* Category Distribution */}
+
  <div className="w-full">
-            <h2 className="font-bold mb-2 text-center text-[25px]">Category Distribution</h2>
+            <h2 className="font-bold mb-2 text-center text-[25px] pt-5">Category Distribution</h2>
             <ResponsiveContainer width="100%" height={400}>
               <PieChart>
                 <Pie data={categoryData} dataKey="value" nameKey="name" outerRadius={200} animationDuration={800}>
@@ -206,33 +182,33 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
 
-        {/* User Data Table */}
+
         <div className="bg-white p-6 shadow-lg rounded-lg mt-6">
   <h2 className="font-bold text-xl mb-4 text-gray-700">User Data</h2>
   <div className="overflow-x-auto">
     <table className="w-full border-collapse">
-      {/* Table Head */}
+
       <thead>
   <tr className="bg-gray-100 text-gray-700 uppercase text-sm leading-normal">
     <th className="py-3 px-6 text-left">ID</th>
     <th className="py-3 px-6 text-left">Name</th>
     <th className="py-3 px-6 text-left">Email</th>
     <th className="py-3 px-6 text-center">Status</th>
-    <th className="py-3 px-6 text-left">Country</th>
-    <th className="py-3 px-6 text-center">Join Date</th>
-    <th className="py-3 px-6 text-center">Last Active</th>
+                    <th className="py-3 px-6 text-left text-nowrap">Country</th>
+                    <th className="py-3 px-6 text-center text-nowrap">Join Date</th>
+                    <th className="py-3 px-6 text-center text-nowrap">Last Active</th>
   </tr>
 </thead>
 
       
-      {/* Table Body */}
+
       <tbody className="text-gray-600 text-sm font-light">
   {filteredData.map((user, index) => (
     <tr
       key={user.id}
       className={`border-b border-gray-200 ${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-100 transition`}
     >
-      <td className="py-3 px-6 text-center">{user.id}</td>
+      <td className="py-3 px-6 text-left">{user.id}</td>
       <td className="py-3 px-6 text-left">{user.name}</td>
       <td className="py-3 px-6 text-left">{user.email}</td>
       <td className="py-3 px-6 text-center">
@@ -251,7 +227,7 @@ export default function Dashboard() {
     </table>
   </div>
 </div>
-
+        </div>
       </div>
     </ProtectedRoute>
   );
